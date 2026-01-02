@@ -27,20 +27,9 @@ def parseargs():
     return parser.parse_args()
     
 
-
-
 # Set the path to the folder containing the images
 folder_path = '/media/frame'
 
-uploaded_json_path = '/data/uploaded.json'
-
-
-# Load the list of last 5 uploaded pictures
-if os.path.exists(uploaded_json_path):
-    with open(uploaded_json_path, 'r') as file:
-        uploaded_photos = json.load(file)
-else:
-    uploaded_photos = []
 
 # Get the list of all photos in the folder
 files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
@@ -55,10 +44,8 @@ else:
     selected_photo = random.choice(files)
 
 
-
 async def main():
     args = parseargs()
-
 
     matte = args.matte
     matte_color = args.matte_color
@@ -75,7 +62,6 @@ async def main():
     tv = SamsungTVAsyncArt(host=args.ip, port=8002)
     await tv.start_listening()
     
-
     supported = await tv.supported()
     if supported:
         logging.info('This TV is supported')
@@ -104,48 +90,33 @@ async def main():
                 logging.info('No PNG or JPG photos found in the folder')
                 return
             else:
-                filename = selected_photo
-                filename = os.path.join(folder_path, filename)
-                new_filename = os.path.join(folder_path, os.path.basename(filename).lower())
-                os.rename(filename, new_filename)
-                filename = new_filename
-                logging.info('Selected and renamed photo: {}'.format(filename))
+                for photo in photos:
 
+                    filename = photo
+                    filename = os.path.join(folder_path, filename)
+                    new_filename = os.path.join(folder_path, os.path.basename(filename).lower())
+                    os.rename(filename, new_filename)
+                    filename = new_filename
+                    logging.info('Selected and renamed photo: {}'.format(filename))
 
-                image = Image.open(filename)
-                image = ImageOps.exif_transpose(image)
-                new_image = image.resize((3840, 2160))
-                new_image.save(filename)
+                    image = Image.open(filename)
+                    image = ImageOps.exif_transpose(image)
+                    new_image = image.resize((3840, 2160))
+                    new_image.save(filename)
 
+                    content_id = None
+                    if filename:
+                        with open(filename, "rb") as f:
+                            file_data = f.read()
+                        file_type = os.path.splitext(filename)[1][1:] 
+                        content_id = await tv.upload(file_data, file_type=file_type, matte=matte_var) 
+                        logging.info('uploaded {} to tv as {}'.format(filename, content_id))
+                        await tv.set_photo_filter(content_id, args.filter)
 
-
-                content_id = None
-                if filename:
-                    with open(filename, "rb") as f:
-                        file_data = f.read()
-                    file_type = os.path.splitext(filename)[1][1:] 
-                    content_id = await tv.upload(file_data, file_type=file_type, matte=matte_var) 
-                    logging.info('uploaded {} to tv as {}'.format(filename, content_id))
-                    await tv.set_photo_filter(content_id, args.filter)
-
-                    await tv.select_image(content_id, show=False)
-                    logging.info('set artwork to {}'.format(content_id))
+                        await tv.select_image(content_id, show=False)
+                        logging.info('set artwork to {}'.format(content_id))
 
                
-                    #delete the file that was showing before
-                    
-                    await tv.delete_list([current_content_id])
-                    logging.info('deleted from tv: {}'.format([current_content_id]))  
-
-                    uploaded_photos.append(selected_photo)
-                    if len(uploaded_photos) > 5:
-                        uploaded_photos.pop(0)
-                    
-                    with open(uploaded_json_path, 'w') as file:
-                        json.dump(uploaded_photos, file)
-
-
-
             await asyncio.sleep(15)
 
         except exceptions.ResponseError as e:
