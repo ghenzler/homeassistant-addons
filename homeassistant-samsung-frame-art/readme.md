@@ -1,4 +1,4 @@
-# Samsung Frame Art Add on for Home Assistant
+# Samsung Frame Art Add on for Home Assistant (GH Patched!)
 
 ![TV with some art on it ](https://i.imgur.com/BunHdwb.jpeg)
 

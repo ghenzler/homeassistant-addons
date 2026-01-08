@@ -6,6 +6,7 @@ MATTE=$(bashio::config 'matte')
 MATTE_COLOR=$(bashio::config 'matte_color')
 
 mkdir -p /media/frame
+mkdir -p /media/frame-uploaded
 echo "Using ${TVIP} as the IP of the Samsung Frame"
 python3 art.py --ip ${TVIP} --filter ${FILTER} --matte ${MATTE} --matte-color ${MATTE_COLOR}
 echo "done, closing now!"
