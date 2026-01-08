@@ -5,7 +5,7 @@
 
 set -e
 
-VERSION=${1:-$(grep '^version:' config.yaml | awk '{print $2}')}
+VERSION=${1:-$(grep '^version:' config.yaml | awk '{print $2}' | sed 's/"//g')}
 DOCKER_USERNAME="georghenzler"
 IMAGE_BASE="${DOCKER_USERNAME}/{arch}-addon-homeassistant-samsung-frame-art"
 
@@ -35,7 +35,7 @@ for arch in "${ARCHITECTURES[@]}"; do
     echo "========================================="
     
     # Get the base image from build.yaml
-    BASE_IMAGE=$(grep "^  ${arch}:" build.yaml | awk '{print $2}')
+    BASE_IMAGE=$(grep "^  ${arch}:" build.yaml | awk '{print $2}' | sed 's/"//g')
     if [ -z "$BASE_IMAGE" ]; then
         echo "Warning: No base image found for ${arch} in build.yaml, skipping..."
         continue
